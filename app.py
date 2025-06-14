@@ -140,7 +140,11 @@ if menu == "📬 Conversaciones":
     st.title("📬 Conversaciones completas")
     chats = obtener_ultimos_chats()
     numeros = [c[0] for c in chats]
-    numero_seleccionado = st.selectbox("Selecciona un número para ver el chat:", numeros)
+    if "vista_conversacion_directa" in st.session_state:
+        numero_seleccionado = st.session_state["vista_conversacion_directa"]
+        del st.session_state["vista_conversacion_directa"]
+    else:
+        numero_seleccionado = st.selectbox("Selecciona un número para ver el chat:", numeros)
 
     if numero_seleccionado:
         st.subheader(f"Chat con {numero_seleccionado}")
@@ -203,27 +207,21 @@ if menu == "📬 Conversaciones":
 
 elif menu == "📌 Pedidos pendientes":
     st.title("📌 Clientes que quieren separar prenda")
-    alertas = obtener_alertas()
+    st_autorefresh(interval=10000, key="refresh_alertas")
 
-    for alerta in alertas:
+    # Filtro por fecha
+    fecha_inicio = st.date_input("📅 Mostrar alertas desde:", datetime.now().date())
+    
+    alertas = obtener_alertas()
+    alertas_filtradas = [a for a in alertas if a[4].date() >= fecha_inicio]
+
+    for alerta in alertas_filtradas:
         id_alerta, numero, nombre, mensaje, fecha = alerta
         st.markdown(f"**📞 {numero} – {nombre or 'Sin nombre'}**")
         st.markdown(f"🕒 {fecha.strftime('%Y-%m-%d %H:%M')}<br>💬 {mensaje}", unsafe_allow_html=True)
 
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            with st.form(f"responder_{id_alerta}"):
-                texto = st.text_area("Responder al cliente:", key=f"texto_{id_alerta}")
-                if st.form_submit_button("Enviar respuesta"):
-                    try:
-                        sid = enviar_mensaje(numero, texto)
-                        guardar_mensaje(numero, texto, rol="assistant")
-                        st.success(f"✅ Enviado correctamente (SID: {sid})")
+        if st.button("🗨️ Ir a la conversación", key=f"ir_chat_{id_alerta}"):
+            st.session_state["vista_conversacion_directa"] = numero
+            st.experimental_rerun()
 
-                    except Exception as e:
-                        st.error(f"❌ Error: {e}")
-        with col2:
-            if st.button("✅ Marcar como respondido", key=f"boton_{id_alerta}"):
-                marcar_respondido(id_alerta)
-                st.success("Marcado como respondido")
-                st.experimental_rerun()
+        st.markdown("---")
