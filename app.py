@@ -151,14 +151,34 @@ if menu == "📬 Conversaciones":
 
             if rol == "user":
                 st.markdown(f"<div style='text-align: left; color: #333'><b>{ts_str}</b><br>👤 {msg}</div>", unsafe_allow_html=True)
+                # Si viene imagen desde media_url
                 if media_url:
                     mostrar_imagen_twilio(media_url)
+
+                # Si viene imagen embebida en el mensaje (markdown tipo [Imagen recibida](URL))
+                elif "twilio.com" in msg and "Media" in msg:
+                    import re
+                    match = re.search(r"\((https://api\.twilio\.com[^\)]+)\)", msg)
+                    if match:
+                        url_directa = match.group(1)
+                        mostrar_imagen_twilio(url_directa)
+
                 st.markdown("<hr>", unsafe_allow_html=True)
 
             else:
                 st.markdown(f"<div style='text-align: right; color: #006400'><b>{ts_str}</b><br>🤖 {msg}</div>", unsafe_allow_html=True)
+                # Si viene imagen desde media_url
                 if media_url:
                     mostrar_imagen_twilio(media_url)
+
+                # Si viene imagen embebida en el mensaje (markdown tipo [Imagen recibida](URL))
+                elif "twilio.com" in msg and "Media" in msg:
+                    import re
+                    match = re.search(r"\((https://api\.twilio\.com[^\)]+)\)", msg)
+                    if match:
+                        url_directa = match.group(1)
+                        mostrar_imagen_twilio(url_directa)
+
                 st.markdown("<hr>", unsafe_allow_html=True)
 
 
