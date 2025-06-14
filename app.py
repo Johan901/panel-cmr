@@ -29,12 +29,18 @@ def get_connection():
 # Enviar mensaje vía Twilio
 def enviar_mensaje(numero, texto):
     client = Client(TWILIO_SID, TWILIO_TOKEN)
+
+    # ✅ Asegurar formato correcto una sola vez
+    if numero.startswith("whatsapp:"):
+        numero = numero.replace("whatsapp:", "")
+
     message = client.messages.create(
         from_="whatsapp:" + TWILIO_NUMBER,
         to="whatsapp:" + numero,
         body=texto
     )
     return message.sid
+
 
 # Obtener historial de conversación
 def obtener_conversacion(numero):
