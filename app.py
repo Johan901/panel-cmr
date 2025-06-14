@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 from twilio.rest import Client
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
+import requests
+from PIL import Image
+from io import BytesIO
 
 
 load_dotenv()
@@ -55,6 +58,20 @@ def guardar_mensaje(numero, texto, rol="assistant"):
     conn.commit()
     cur.close()
     conn.close()
+
+def mostrar_imagen_twilio(media_url):
+    try:
+        response = requests.get(
+            media_url,
+            auth=(TWILIO_SID, TWILIO_TOKEN)
+        )
+        if response.status_code == 200:
+            image = Image.open(BytesIO(response.content))
+            st.image(image, width=300)
+        else:
+            st.warning("No se pudo cargar la imagen (Twilio)")
+    except Exception as e:
+        st.error(f"Error al mostrar imagen: {e}")
 
 # Obtener historial de conversación
 def obtener_conversacion(numero):
@@ -135,13 +152,13 @@ if menu == "📬 Conversaciones":
             if rol == "user":
                 st.markdown(f"<div style='text-align: left; color: #333'><b>{ts_str}</b><br>👤 {msg}</div>", unsafe_allow_html=True)
                 if media_url:
-                    st.image(media_url, width=300)
+                    mostrar_imagen_twilio(media_url)
                 st.markdown("<hr>", unsafe_allow_html=True)
 
             else:
                 st.markdown(f"<div style='text-align: right; color: #006400'><b>{ts_str}</b><br>🤖 {msg}</div>", unsafe_allow_html=True)
                 if media_url:
-                    st.image(media_url, width=300)
+                    mostrar_imagen_twilio(media_url)
                 st.markdown("<hr>", unsafe_allow_html=True)
 
 
