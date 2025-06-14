@@ -61,7 +61,7 @@ def obtener_conversacion(numero):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT role, message, timestamp
+        SELECT role, message, timestamp, media_url
         FROM chat_history
         WHERE phone_number = %s
         ORDER BY timestamp ASC
@@ -70,6 +70,7 @@ def obtener_conversacion(numero):
     cur.close()
     conn.close()
     return datos
+
 
 # Obtener alertas pendientes
 def obtener_alertas():
@@ -128,12 +129,21 @@ if menu == "📬 Conversaciones":
         st.subheader(f"Chat con {numero_seleccionado}")
         mensajes = obtener_conversacion(numero_seleccionado)
 
-        for rol, msg, ts in mensajes:
+        for rol, msg, ts, media_url in mensajes:
             ts_str = ts.strftime("%Y-%m-%d %H:%M")
+
             if rol == "user":
-                st.markdown(f"<div style='text-align: left; color: #333'><b>{ts_str}</b><br>👤 {msg}</div><hr>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: left; color: #333'><b>{ts_str}</b><br>👤 {msg}</div>", unsafe_allow_html=True)
+                if media_url:
+                    st.image(media_url, width=300)
+                st.markdown("<hr>", unsafe_allow_html=True)
+
             else:
-                st.markdown(f"<div style='text-align: right; color: #006400'><b>{ts_str}</b><br>🤖 {msg}</div><hr>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: right; color: #006400'><b>{ts_str}</b><br>🤖 {msg}</div>", unsafe_allow_html=True)
+                if media_url:
+                    st.image(media_url, width=300)
+                st.markdown("<hr>", unsafe_allow_html=True)
+
 
         # Auto-refresh cada 10 segundos (10,000 ms)
         st_autorefresh(interval=10000, key="refresh")
