@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 from twilio.rest import Client
 from datetime import datetime
+from streamlit_autorefresh import st_autorefresh
+
 
 load_dotenv()
 
@@ -133,12 +135,22 @@ if menu == "📬 Conversaciones":
             else:
                 st.markdown(f"<div style='text-align: right; color: #006400'><b>{ts_str}</b><br>🤖 {msg}</div><hr>", unsafe_allow_html=True)
 
+        # Auto-refresh cada 10 segundos (10,000 ms)
+        st_autorefresh(interval=10000, key="refresh")
+
+        # Inicializar respuesta si no existe
+        if "respuesta" not in st.session_state:
+            st.session_state["respuesta"] = ""
+
         with st.form("responder_form"):
-            respuesta = st.text_area("Responder mensaje:")
+            respuesta = st.text_area("Responder mensaje:", value=st.session_state["respuesta"], key="input_area")
+            
             if st.form_submit_button("Enviar respuesta"):
                 try:
                     sid = enviar_mensaje(numero_seleccionado, respuesta)
                     guardar_mensaje(numero_seleccionado, respuesta, rol="assistant")
+                    st.success(f"✅ Enviado correctamente (SID: {sid})")
+                    st.session_state["respuesta"] = ""  # Limpiar solo si se envió
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
 
