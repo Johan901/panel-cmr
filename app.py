@@ -1,4 +1,6 @@
 import streamlit as st
+import os
+os.environ["PSYCOPG_ALLOW_CYTHON"] = "1"
 import psycopg2
 import os
 from dotenv import load_dotenv
