@@ -42,6 +42,18 @@ def enviar_mensaje(numero, texto):
     return message.sid
 
 
+# Guardar mensaje en chat_history como "assistant"
+def guardar_mensaje(numero, texto, rol="assistant"):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO chat_history (phone_number, role, message, timestamp)
+        VALUES (%s, %s, %s, NOW())
+    """, (numero, rol, texto))
+    conn.commit()
+    cur.close()
+    conn.close()
+
 # Obtener historial de conversación
 def obtener_conversacion(numero):
     conn = get_connection()
@@ -126,7 +138,7 @@ if menu == "📬 Conversaciones":
             if st.form_submit_button("Enviar respuesta"):
                 try:
                     sid = enviar_mensaje(numero_seleccionado, respuesta)
-                    st.success(f"✅ Enviado correctamente (SID: {sid})")
+                    guardar_mensaje(numero_seleccionado, respuesta, rol="assistant")
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
 
@@ -146,7 +158,9 @@ elif menu == "📌 Pedidos pendientes":
                 if st.form_submit_button("Enviar respuesta"):
                     try:
                         sid = enviar_mensaje(numero, texto)
+                        guardar_mensaje(numero, texto, rol="assistant")
                         st.success(f"✅ Enviado correctamente (SID: {sid})")
+
                     except Exception as e:
                         st.error(f"❌ Error: {e}")
         with col2:
