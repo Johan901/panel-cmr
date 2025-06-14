@@ -210,10 +210,10 @@ elif menu == "📌 Pedidos pendientes":
     st_autorefresh(interval=10000, key="refresh_alertas")
 
     # Filtro por fecha
-    fecha_inicio = st.date_input("📅 Mostrar alertas desde:", datetime.now().date())
+    fecha_inicio = st.date_input("📅 Ver alertas del día:", datetime.now().date())
     
     alertas = obtener_alertas()
-    alertas_filtradas = [a for a in alertas if a[4].date() >= fecha_inicio]
+    alertas_filtradas = [a for a in alertas if a[4].date() == fecha_inicio]
 
     for alerta in alertas_filtradas:
         id_alerta, numero, nombre, mensaje, fecha = alerta
