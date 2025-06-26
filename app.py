@@ -78,7 +78,7 @@ def obtener_conversacion(numero):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT role, message, timestamp, media_url
+        SELECT sid, role, message, timestamp, media_url, quoted_sid
         FROM chat_history
         WHERE phone_number = %s
         ORDER BY timestamp ASC
@@ -87,6 +87,7 @@ def obtener_conversacion(numero):
     cur.close()
     conn.close()
     return datos
+
 
 
 # Obtener alertas pendientes
@@ -150,40 +151,41 @@ if menu == "📬 Conversaciones":
         st.subheader(f"Chat con {numero_seleccionado}")
         mensajes = obtener_conversacion(numero_seleccionado)
 
-        for rol, msg, ts, media_url in mensajes:
+        # Crear diccionario para buscar mensajes por SID
+        referencia_mensajes = {}
+        for sid, rol, msg, ts, media_url, quoted_sid in mensajes:
+            referencia_mensajes[sid] = (rol, msg, ts)
+
+        # Mostrar mensajes
+        for sid, rol, msg, ts, media_url, quoted_sid in mensajes:
             ts_str = ts.strftime("%Y-%m-%d %H:%M")
 
+            # 🔹 Mostrar respuesta citada si existe
+            if quoted_sid and quoted_sid in referencia_mensajes:
+                _, msg_citado, _ = referencia_mensajes[quoted_sid]
+                st.markdown(f"""
+                    <div style='padding: 8px; margin-bottom: 4px; background-color: #f0f0f0; border-left: 4px solid #999'>
+                    <b>↪ Respuesta a:</b><br>{msg_citado}
+                    </div>
+                """, unsafe_allow_html=True)
+
+            # 🔸 Mostrar mensaje actual
             if rol == "user":
                 st.markdown(f"<div style='text-align: left; color: #333'><b>{ts_str}</b><br>👤 {msg}</div>", unsafe_allow_html=True)
-                # Si viene imagen desde media_url
-                if media_url:
-                    mostrar_imagen_twilio(media_url)
-
-                # Si viene imagen embebida en el mensaje (markdown tipo [Imagen recibida](URL))
-                elif "twilio.com" in msg and "Media" in msg:
-                    import re
-                    match = re.search(r"\((https://api\.twilio\.com[^\)]+)\)", msg)
-                    if match:
-                        url_directa = match.group(1)
-                        mostrar_imagen_twilio(url_directa)
-
-                st.markdown("<hr>", unsafe_allow_html=True)
-
             else:
                 st.markdown(f"<div style='text-align: right; color: #006400'><b>{ts_str}</b><br>🤖 {msg}</div>", unsafe_allow_html=True)
-                # Si viene imagen desde media_url
-                if media_url:
-                    mostrar_imagen_twilio(media_url)
 
-                # Si viene imagen embebida en el mensaje (markdown tipo [Imagen recibida](URL))
-                elif "twilio.com" in msg and "Media" in msg:
-                    import re
-                    match = re.search(r"\((https://api\.twilio\.com[^\)]+)\)", msg)
-                    if match:
-                        url_directa = match.group(1)
-                        mostrar_imagen_twilio(url_directa)
+            # 🖼️ Mostrar imagen si existe
+            if media_url:
+                mostrar_imagen_twilio(media_url)
+            elif "twilio.com" in msg and "Media" in msg:
+                import re
+                match = re.search(r"\((https://api\.twilio\.com[^\)]+)\)", msg)
+                if match:
+                    url_directa = match.group(1)
+                    mostrar_imagen_twilio(url_directa)
 
-                st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown("<hr>", unsafe_allow_html=True)
 
 
         # Auto-refresh cada 10 segundos (10,000 ms)
