@@ -78,7 +78,7 @@ def obtener_conversacion(numero):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT sid, role, message, timestamp, media_url, quoted_sid
+        SELECT id AS sid, role, message, timestamp, media_url, quoted_sid
         FROM chat_history
         WHERE phone_number = %s
         ORDER BY timestamp ASC
