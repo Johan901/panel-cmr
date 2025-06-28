@@ -139,17 +139,29 @@ menu = st.sidebar.radio("Selecciona vista:", ["📬 Conversaciones", "📌 Pedid
 
 if menu == "📬 Conversaciones":
     st.title("📬 Conversaciones completas")
-    chats = obtener_ultimos_chats()
-    numeros = [c[0] for c in chats]
-    if "vista_conversacion_directa" in st.session_state:
-        numero_seleccionado = st.session_state["vista_conversacion_directa"]
-        del st.session_state["vista_conversacion_directa"]
-    else:
-        numero_seleccionado = st.selectbox("Selecciona un número para ver el chat:", numeros)
 
-    if numero_seleccionado:
-        st.subheader(f"Chat con {numero_seleccionado}")
-        mensajes = obtener_conversacion(numero_seleccionado)
+    # 🔎 Filtro por día
+    fecha_seleccionada = st.date_input("📅 Filtrar por día:", datetime.now().date())
+
+    # Obtener todos los chats
+    chats = obtener_ultimos_chats()
+
+    # Filtrar por fecha
+    chats_filtrados = [c for c in chats if c[2].date() == fecha_seleccionada]
+    numeros = [c[0] for c in chats_filtrados]
+
+    if not numeros:
+        st.warning("No hay conversaciones en la fecha seleccionada.")
+    else:
+        if "vista_conversacion_directa" in st.session_state:
+            numero_seleccionado = st.session_state["vista_conversacion_directa"]
+            del st.session_state["vista_conversacion_directa"]
+        else:
+            numero_seleccionado = st.selectbox("Selecciona un número para ver el chat:", numeros)
+
+        if numero_seleccionado:
+            st.subheader(f"Chat con {numero_seleccionado}")
+            mensajes = obtener_conversacion(numero_seleccionado)
 
         # Crear diccionario para buscar mensajes por SID
         referencia_mensajes = {}
