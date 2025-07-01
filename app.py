@@ -244,11 +244,12 @@ if menu == "📬 Conversaciones":
                             res.raise_for_status()
                             media_url = res.json()["data"]["url"]
 
-                            # 🔁 2. Enviar por Twilio
+                           # 🔁 2. Enviar por Twilio
+                            numero_limpio = numero_seleccionado.replace("whatsapp:", "")
                             client = Client(TWILIO_SID, TWILIO_TOKEN)
                             message = client.messages.create(
                                 from_="whatsapp:" + TWILIO_NUMBER,
-                                to="whatsapp:" + numero_seleccionado,
+                                to="whatsapp:" + numero_limpio,
                                 body=texto_imagen or None,
                                 media_url=[media_url]
                             )
@@ -264,7 +265,7 @@ if menu == "📬 Conversaciones":
                             cur.close()
                             conn.close()
 
-                            st.success("✅ Imagen enviada correctamente.")
+                            st.success(f"✅ Imagen enviada correctamente (SID: {message.sid})")
                     except Exception as e:
                         st.error(f"❌ Error al enviar imagen: {e}")
 
