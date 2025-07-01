@@ -120,19 +120,21 @@ def marcar_respondido(alerta_id):
     conn.close()
 
 # Listar chats recientes únicos
-def obtener_ultimos_chats():
+def obtener_ultimos_chats(fecha_filtrada):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
         SELECT DISTINCT ON (phone_number) phone_number, message, timestamp
         FROM chat_history
+        WHERE DATE(timestamp AT TIME ZONE 'America/Bogota') = %s
         ORDER BY phone_number, timestamp DESC
-        LIMIT 50
-    """)
+        LIMIT 100
+    """, (fecha_filtrada,))
     datos = cur.fetchall()
     cur.close()
     conn.close()
     return datos
+
 
 # --- UI ---
 menu = st.sidebar.radio("Selecciona vista:", ["📬 Conversaciones", "📌 Pedidos pendientes"])
@@ -144,11 +146,10 @@ if menu == "📬 Conversaciones":
     fecha_seleccionada = st.date_input("📅 Filtrar por día:", value=date.today())
 
     # Cargar todos los chats desde la base
-    chats = obtener_ultimos_chats()
+    chats = obtener_ultimos_chats(fecha_seleccionada)
 
     # Asegurar que cada mensaje tenga solo fecha (sin hora) y filtrar
-    chats_filtrados = [c for c in chats if c[2].date() == fecha_seleccionada]
-    numeros = [c[0] for c in chats_filtrados]
+    numeros = [c[0] for c in chats]
 
     if not numeros:
         st.warning("No hay conversaciones en la fecha seleccionada.")
