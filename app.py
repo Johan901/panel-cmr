@@ -119,7 +119,6 @@ def marcar_respondido(alerta_id):
     conn.close()
 
 # Listar chats recientes únicos
-@st.cache_data(ttl=60)
 def obtener_ultimos_chats():
     conn = get_connection()
     cur = conn.cursor()
