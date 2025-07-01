@@ -215,9 +215,58 @@ if menu == "📬 Conversaciones":
                     sid = enviar_mensaje(numero_seleccionado, respuesta)
                     guardar_mensaje(numero_seleccionado, respuesta, rol="assistant")
                     st.success(f"✅ Enviado correctamente (SID: {sid})")
-                    st.session_state["respuesta"] = ""  # Limpiar solo si se envió
+                    st.session_state["respuesta"] = ""  #Limpiar solo si se envió
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
+        with st.form("form_imagen"):
+            st.markdown("📷 **Enviar imagen al cliente:**")
+            imagen = st.file_uploader("Selecciona una imagen", type=["jpg", "jpeg", "png"], key="upload_image_form")
+            texto_imagen = st.text_input("Mensaje opcional junto a la imagen", "")
+
+            if st.form_submit_button("Enviar imagen"):
+                if imagen is None:
+                    st.warning("Debes seleccionar una imagen.")
+                else:
+                    try:
+                        # 🔄 1. Subir imagen temporal a imgbb (u otro servidor público)
+                        import base64
+                        imgbb_api_key = os.getenv("IMGBB_API_KEY")
+                        if not imgbb_api_key:
+                            st.error("⚠️ Falta configurar la API Key de imgbb en el archivo .env (IMGBB_API_KEY)")
+                        else:
+                            imagen_bytes = imagen.read()
+                            imagen_b64 = base64.b64encode(imagen_bytes).decode("utf-8")
+                            res = requests.post(
+                                "https://api.imgbb.com/1/upload",
+                                data={"key": imgbb_api_key, "image": imagen_b64}
+                            )
+                            res.raise_for_status()
+                            media_url = res.json()["data"]["url"]
+
+                            # 🔁 2. Enviar por Twilio
+                            client = Client(TWILIO_SID, TWILIO_TOKEN)
+                            message = client.messages.create(
+                                from_="whatsapp:" + TWILIO_NUMBER,
+                                to="whatsapp:" + numero_seleccionado,
+                                body=texto_imagen or None,
+                                media_url=[media_url]
+                            )
+
+                            # 💾 3. Guardar en chat_history
+                            conn = get_connection()
+                            cur = conn.cursor()
+                            cur.execute("""
+                                INSERT INTO chat_history (phone_number, role, message, media_url, timestamp)
+                                VALUES (%s, %s, %s, %s, NOW())
+                            """, (numero_seleccionado, "assistant", texto_imagen or "", media_url))
+                            conn.commit()
+                            cur.close()
+                            conn.close()
+
+                            st.success("✅ Imagen enviada correctamente.")
+                    except Exception as e:
+                        st.error(f"❌ Error al enviar imagen: {e}")
+
 
 elif menu == "📌 Pedidos pendientes":
     st.title("📌 Clientes que quieren separar prenda")
