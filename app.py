@@ -10,6 +10,7 @@ from streamlit_autorefresh import st_autorefresh
 import requests
 from PIL import Image
 from io import BytesIO
+from datetime import date
 
 
 load_dotenv()
@@ -139,13 +140,13 @@ menu = st.sidebar.radio("Selecciona vista:", ["📬 Conversaciones", "📌 Pedid
 if menu == "📬 Conversaciones":
     st.title("📬 Conversaciones completas")
 
-    # 🔎 Filtro por día
-    fecha_seleccionada = st.date_input("📅 Filtrar por día:", datetime.now().date())
+    # Filtro por fecha sin zonas ni problemas
+    fecha_seleccionada = st.date_input("📅 Filtrar por día:", value=date.today())
 
-    # Obtener todos los chats
+    # Cargar todos los chats desde la base
     chats = obtener_ultimos_chats()
 
-    # Filtrar por fecha
+    # Asegurar que cada mensaje tenga solo fecha (sin hora) y filtrar
     chats_filtrados = [c for c in chats if c[2].date() == fecha_seleccionada]
     numeros = [c[0] for c in chats_filtrados]
 
